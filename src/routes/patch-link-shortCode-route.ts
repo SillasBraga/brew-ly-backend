@@ -1,0 +1,63 @@
+import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
+import { z } from "zod";
+import { getLinks } from "../functions/get-links.ts";
+import { incrementAccessLink } from "../functions/increment-access-link.ts";
+
+const shortCodeRegex = /^[a-zA-Z0-9_-]{3,50}$/;
+
+export const patchLinkByShortCodeRoute: FastifyPluginAsyncZod = async (app) => {
+  app.patch(
+    "/links/access",
+    {
+      schema: {
+        summary: "Increment access to short code",
+        tags: ["links"],
+        body: z.object({
+          shortCode: z.string(),
+        }),
+        response: {
+          201: z
+            .object({
+              id: z.string().uuid(),
+              originalUrl: z.string().url(),
+              shortCode: z
+                .string()
+                .regex(shortCodeRegex, "Short URL mal formatada."),
+              accessCount: z.number(),
+              createdAt: z.date(),
+            })
+            .describe("Updated access link"),
+          404: z
+            .object({
+              message: z.string(),
+            })
+            .describe("Link not found"),
+          400: z
+            .object({
+              errors: z.array(
+                z.object({
+                  name: z.string(),
+                  error: z.string(),
+                }),
+              ),
+            })
+            .describe("Validation fails"),
+        },
+      },
+    },
+    async (request, reply) => {
+      const { shortCode } = request.body;
+      const { links } = await getLinks({
+        searchQuery: shortCode,
+      });
+
+      if (links.length === 0) {
+        return reply.status(404).send({ message: "Link not found" });
+      }
+
+      const link = await incrementAccessLink({ shortCode });
+
+      return reply.status(201).send({ ...link });
+    },
+  );
+};
