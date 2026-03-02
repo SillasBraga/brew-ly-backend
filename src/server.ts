@@ -14,6 +14,7 @@ import { postLinkRoute } from "./routes/post-link-route.ts";
 import { patchLinkByShortCodeRoute } from "./routes/patch-link-shortCode-route.ts";
 import { deleteLinkByShortCodeRoute } from "./routes/delete-link-shortCode-route.ts";
 import { exportLinksRoute } from "./routes/export-links-route.ts";
+import { env } from "./env.ts";
 
 const app = fastify();
 
@@ -64,6 +65,7 @@ app.register(scalarUI, {
   },
 });
 
-app.listen({ port: 3333 }).then(() => {
-  console.log("HTTP server running!");
-});
+app.listen({ port: env.PORT || 3333, host: "0.0.0.0" })
+  .then(() => {
+    console.log("HTTP server running!");
+  });
