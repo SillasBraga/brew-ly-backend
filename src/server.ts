@@ -36,6 +36,8 @@ app.setErrorHandler((error, request, reply) => {
 
 app.register(fastifyCors, {
   origin: "*",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 app.register(fastifySwagger, {
